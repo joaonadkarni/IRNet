@@ -52,7 +52,7 @@ def evaluate(args):
         question_str = input("Enter your question: ")
 
         DUMMY_INPUT["question"] = question_str
-        DUMMY_INPUT["question_toks"] = question_str.split(" ")
+        DUMMY_INPUT["question_toks"] = question_str.strip().split(" ")
 
         import json
         with open(QUESTION_DATA_PATH, 'w', encoding='utf-8') as f:
