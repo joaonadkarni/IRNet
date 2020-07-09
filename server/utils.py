@@ -72,10 +72,16 @@ def _normalize_word(word):
     return " ".join(tokens)
 
 
+def _clean_entities(entities):
+    return [ent for ent in entities if not(ent['isHidden'] or ent['isStatic'] or (ent['refKey'] is not None))]
+
+
 def _get_data_model_df(data_model):
     entities = data_model['entities']
     augmented_attributes = []
-    for idx, ent in enumerate(entities):
+    # for now we just consider locally created entities
+    local_entities = _clean_entities(entities)
+    for idx, ent in enumerate(local_entities):
         for attr in ent['attributes']:
             attr['entIdx'] = idx
             attr['entKey'] = ent['key']
