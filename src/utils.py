@@ -259,6 +259,40 @@ def epoch_train(model, optimizer, batch_size, sql_data, table_data,
         st = ed
     return cum_loss / len(sql_data)
 
+
+def get_json_data(model, table_data, question, beam_size=3):
+    model.eval()
+
+    json_datas = []
+    examples = to_batch_seq(question, table_data, [0], 0, 1, is_train=False)
+    for example in examples:
+        results_all = model.parse(example, beam_size=beam_size)
+        results = results_all[0]
+        list_preds = []
+        try:
+
+            pred = " ".join([str(x) for x in results[0].actions])
+            for x in results:
+                list_preds.append(" ".join(str(x.actions)))
+        except Exception as e:
+            # print('Epoch Acc: ', e)
+            # print(results)
+            # print(results_all)
+            pred = ""
+
+        simple_json = example.sql_json['pre_sql']
+
+        simple_json['sketch_result'] = " ".join(str(x) for x in results_all[1])
+        simple_json['model_result'] = pred
+
+        json_datas.append(simple_json)
+
+    return json_datas
+
+
+
+
+
 def epoch_acc(model, batch_size, sql_data, table_data, beam_size=3):
     model.eval()
     perm = list(range(len(sql_data)))
@@ -302,6 +336,7 @@ def epoch_acc(model, batch_size, sql_data, table_data, beam_size=3):
             json_datas.append(simple_json)
         st = ed
     return json_datas, float(sketch_correct)/float(total), float(rule_label_correct)/float(total)
+
 
 def eval_acc(preds, sqls):
     sketch_correct, best_correct = 0, 0
