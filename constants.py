@@ -1,0 +1,5 @@
+MODEL_PATH = "./saved_model/IRNet_pretrained.model"
+EMBEDS_PATH = "./data/glove.42B.300d.txt"
+QUESTION_DATA_PATH = "./data/custom/question.json"
+TABLE_DATA_PATH = "./data/custom/tables.json"
+PREDICT_LF_PATH = "./data/custom/predict_lf.json"
