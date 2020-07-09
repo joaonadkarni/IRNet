@@ -7,10 +7,10 @@ import torch
 from constants import MODEL_PATH, EMBEDS_PATH, QUESTION_DATA_PATH, TABLE_DATA_PATH, PREDICT_LF_PATH
 from dummy_input import DUMMY_INPUT
 from sem2SQL import transform
-from src import utils
 from src.models.model import IRNet
 from src.rule import semQL
-from src.utils import load_data_new
+from src.utils import load_data_new, get_json_data, load_word_emb
+from src import args as arg
 
 from src.rule.sem_utils import alter_column0, alter_inter, alter_not_in
 
@@ -20,6 +20,15 @@ def _log_or_print(logger, msg):
         logger.info(msg)
     else:
         print(msg)
+
+
+def get_args():
+    arg_parser = arg.init_arg_parser()
+    return arg_parser.parse_args(
+        "--dataset ./data/custom --glove_embed_path ./data/glove.42B.300d.txt --cuda --epoch 50 "
+        "--loss_epoch_threshold 50 --sketch_loss_coefficie 1.0 --beam_size 5 --seed 90 --save ${save_name} "
+        "--embed_size 300 --sentence_features --column_pointer --hidden_size 300 --lr_scheduler --lr_scheduler_gammar "
+        "0.5 --att_vec_size 300 --load_model ./saved_model/IRNet_pretrained.model".split())
 
 
 def get_and_load_model(args, logger=None):
@@ -40,7 +49,7 @@ def get_and_load_model(args, logger=None):
 
     model.load_state_dict(pretrained_modeled)
 
-    model.word_emb = utils.load_word_emb(EMBEDS_PATH)
+    model.word_emb = load_word_emb(EMBEDS_PATH)
 
     model.eval()
 
@@ -72,8 +81,8 @@ def build_input(question_str):
     return question_data, table_data_new
 
 
-def buil_model_prediction_lf(model, table_data_new, question_data, beam_size):
-    json_datas = utils.get_json_data(model, table_data_new, question_data, beam_size=beam_size)
+def build_model_prediction_lf(model, table_data_new, question_data, beam_size):
+    json_datas = get_json_data(model, table_data_new, question_data, beam_size=beam_size)
     with open(PREDICT_LF_PATH, 'w') as f:
         json.dump(json_datas, f)
 
