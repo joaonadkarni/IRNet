@@ -20,8 +20,6 @@ QUESTION_DATA_PATH = "./data/custom/question.json"
 TABLE_DATA_PATH = "./data/custom/tables.json"
 PREDICT_LF_PATH = "./data/custom/predict_lf.json"
 
-CUDA = False
-
 
 def evaluate(args):
     """
@@ -32,7 +30,7 @@ def evaluate(args):
     grammar = semQL.Grammar()
     model = IRNet(args, grammar)
 
-    if CUDA: model.cuda()
+    if args.cuda: model.cuda()
 
     print('load pretrained model from %s' % MODEL_PATH)
     pretrained_model = torch.load(MODEL_PATH,
