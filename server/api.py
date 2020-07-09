@@ -2,7 +2,7 @@ import logging
 from datetime import datetime
 from flask import Request, Response
 
-from rdai.flask.base_api import BasePOSTAPIPipeline
+from base_api import BasePOSTAPIPipeline
 
 from types import ModelInput, ServerResponse
 from utils import get_and_load_model, get_args, build_model_prediction_lf, generate_query_from_prediction_lf, \
