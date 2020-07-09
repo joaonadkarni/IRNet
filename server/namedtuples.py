@@ -1,7 +1,7 @@
 from typing import NamedTuple, Dict, List
 
 
-class ModelInput(NamedTuple):
+class ServerModelInput(NamedTuple):
     question: List[Dict]
     tables: List[Dict]
 
