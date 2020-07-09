@@ -5,7 +5,6 @@
 
 data=$1
 table_data=$2
-output=$3
 
 echo "Start download NLTK data"
 python download_nltk.py
