@@ -4,8 +4,8 @@ from flask import Request, Response
 
 from rdai.flask.base_api import BasePOSTAPIPipeline
 
-from server.types import ModelInput, ServerResponse
-from server.utils import get_and_load_model, get_args, build_model_prediction_lf, generate_query_from_prediction_lf, \
+from types import ModelInput, ServerResponse
+from utils import get_and_load_model, get_args, build_model_prediction_lf, generate_query_from_prediction_lf, \
     build_spider_tables, build_input
 
 logger = logging.getLogger(__name__)

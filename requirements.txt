@@ -7,3 +7,4 @@ numpy==1.14.0
 pytorch-pretrained-bert==0.5.1
 tqdm==4.31.1
 pandas
+flask

@@ -5,5 +5,5 @@ if ! [ -r "$GUNICORN_CONF" ]; then
     echo "(failed to start because couldn't find ${GUNICORN_CONF})" >&2
     exit 1
 fi
-gunicorn "server.main:create_app()" $*
+gunicorn3 "server.main:create_app()" $*
 tail -F logs/gunicorn.log
