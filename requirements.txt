@@ -8,3 +8,4 @@ pytorch-pretrained-bert==0.5.1
 tqdm==4.31.1
 pandas
 flask
+statsd

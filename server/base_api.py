@@ -2,7 +2,7 @@ import logging
 from abc import ABC, abstractmethod
 from flask import request, jsonify, Flask, Response, Request
 
-from rdai.flask.logging_utils import stats, store_data_for_error_logging, logtime
+from logging_utils import stats, store_data_for_error_logging, logtime
 
 
 logger = logging.getLogger(__name__)
