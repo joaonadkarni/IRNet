@@ -54,11 +54,16 @@ def evaluate(args):
         DUMMY_INPUT["question"] = question_str
         DUMMY_INPUT["question_toks"] = [tok for tok in question_str.strip().split(" ") if tok]
 
+        if DUMMY_INPUT["question_toks"][-1].endswith("?"):
+            DUMMY_INPUT["question_toks"][-1] = DUMMY_INPUT["question_toks"][-1][:-1]
+            DUMMY_INPUT["question_toks"].append("?")
+
         import json
         with open(QUESTION_DATA_PATH, 'w', encoding='utf-8') as f:
             json.dump([DUMMY_INPUT], f, ensure_ascii=False, indent=4)
 
-        subprocess.run(["cd preprocess && bash run_me.sh ../data/custom/question.json ../data/custom/tables.json"], shell=True)
+        subprocess.run(["cd preprocess && bash run_me.sh ../data/custom/question.json ../data/custom/tables.json"],
+                       shell=True, stdout=subprocess.DEVNULL)
 
         with open(TABLE_DATA_PATH) as inf:
             print("Loading data from %s" % TABLE_DATA_PATH)
