@@ -1,6 +1,7 @@
 import json
 import subprocess
 import traceback
+import pandas as pd
 
 import torch
 
@@ -20,6 +21,118 @@ def _log_or_print(logger, msg):
         logger.info(msg)
     else:
         print(msg)
+
+
+def _normalize_word(word):
+
+    if len(word)<2:
+        return [word.lower()]
+
+    tokens = []
+    b = 0 if (word[0].isalpha()) else 1
+    i=1
+
+    for char in word[1:]:
+
+        # If the word has a lower case letter followed by an upper case letter then it's separated
+        #  in two subtokens, with the uppercase letter being the cutting point
+        # For example, createdBy would be divided in created and by
+        # Note that the uppercase letter of the second word is replaced by its correspondent lower case letter
+        if char.isupper() and word[i-1].islower() and (i-b)>1:
+            tokens.append(word[b:i].lower())
+            b = i
+
+        # If the word has a sequence of upper case letters followed by a lower case letter then it's separated
+        #  in two subtokens, with the last upper letter being the cutting point
+        # For example, FRAPScase would be divided in frap and scase
+        # Note that the uppercase letters are replaced by its correspondent lower case letters
+        elif char.islower() and word[i-1].isupper() and (i-b)>1:
+            if (i-b>2):
+                tokens.append(word[b:i-1].lower())
+            b = i-1
+
+        # If the word has an alpha numeric character followed by a non alpha numeric character then it's separated
+        #  in two subtokens, with the non alphabetic character being the cutting point
+        # For example, created_By would be divided in created and by
+        # Note that the uppercase letter of the second word is replaced by its correspondent lower case letter
+        # Note2: the word has to have at least 2 characters to be considered valid
+        elif (not char.isalpha()):
+            if (word[i-1].isalpha()) and (i-b)>1:
+                tokens.append(word[b:i].lower())
+            b = i+1
+
+        i+=1
+
+    # Add last sub token
+    # Note that the uppercase letter of the second word is replaced by its correspondent lower case letter
+    # Note2: the word has to have at least 2 characters to be considered valid
+    if b<len(word) and (i-b)>1:
+        tokens.append(word[b:i].lower())
+
+    return " ".join(tokens)
+
+
+def _get_data_model_df(data_model):
+    entities = data_model['entities']
+    augmented_attributes = []
+    for idx, ent in enumerate(entities):
+        for attr in ent['attributes']:
+            attr['entIdx'] = idx
+            attr['entKey'] = ent['key']
+            attr['entName'] = ent['name']
+            attr['entIsHidden'] = ent['isHidden']
+            attr['entIsStatic'] = ent['isStatic']
+            attr['entRefKey'] = ent['refKey']
+            augmented_attributes.append(attr)
+    return pd.DataFrame(augmented_attributes)
+
+
+def _data_model_to_spider_data(data_model):
+
+    df = _get_data_model_df(data_model)
+    map_types = dict({'Text': 'text',
+                      'Integer': 'number',
+                      'Decimal': 'number',
+                      'Long Integer': 'number',
+                      'Boolean': 'number',
+                      'Date time': 'time',
+                      'Time': 'time',
+                      'Date': 'time',
+                      'Phone Number': 'number',
+                      'Email': 'text',
+                      'Currency': 'number',
+                      'Categorical': 'text',
+                      'Identifier': 'number'})
+
+    df['index'] = df.index + 1
+    all_column = [-1, "*"]
+
+    result = {
+        'column_names': [all_column, *df.apply(lambda x: [x['entIdx'], _normalize_word(x['name'])], axis=1).tolist()],
+        'column_names_original': [all_column, *df.apply(lambda x: [x['entIdx'], x['name']], axis=1).tolist()],
+        'column_types': df['type'].map(
+            lambda x: 'number' if x.endswith('Identifier') else map_types.get(x, 'text')).tolist(),
+        'db_id': '_'.join(df['entName'].unique().tolist()),
+        'primary_keys': df.loc[df['isPrimary'] == True]['index'].tolist(),
+        'table_names': df['entName'].unique().tolist(),
+        'table_names_original': [_normalize_word(x) for x in df['entName'].unique().tolist()]
+    }
+
+    fks = []
+    for fkref, idx in df.loc[~df['fkRefKey'].isnull()][['fkRefKey', 'index']].values.tolist():
+        origin_key_idx = df.loc[(df['entKey'] == fkref) & (df['isPrimary'] == True)]['index'].tolist()
+        if len(origin_key_idx) == 1:
+            fks.append([idx, origin_key_idx[0]])
+
+    result['foreign_keys'] = fks
+
+    return result
+
+
+def build_spider_tables(data_model):
+    spider_table = _data_model_to_spider_data(data_model)
+    with open(TABLE_DATA_PATH, 'w') as f:
+        json.dump([spider_table], f)
 
 
 def get_args():

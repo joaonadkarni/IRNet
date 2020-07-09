@@ -5,7 +5,8 @@ from flask import Request, Response
 from rdai.flask.base_api import BasePOSTAPIPipeline
 
 from server.types import ModelInput, ServerResponse
-from server.utils import get_and_load_model, get_args, build_model_prediction_lf, generate_query_from_prediction_lf
+from server.utils import get_and_load_model, get_args, build_model_prediction_lf, generate_query_from_prediction_lf, \
+    build_spider_tables, build_input
 
 logger = logging.getLogger(__name__)
 
@@ -18,9 +19,9 @@ class Nlp2SqlApiV1(BasePOSTAPIPipeline):
 
     def parse_request(self, request: Request) -> ModelInput:
         data = request.get_json()
-        data_model = build_data_model(data['data_model'])
-        text = data['text']
-        return ServerInput(text=text, data_model=data_model)
+        build_spider_tables(data['data_model'])
+        question_data, table_data = build_input(data['text'])
+        return ModelInput(question=question_data, tables=table_data)
 
     def handle_request(self, *args, **kwargs) -> Response:
         # Save timestamp when job was received
