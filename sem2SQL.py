@@ -189,7 +189,7 @@ def _transform(components, transformed_sql, col_set, table_names, schema):
     return transformed_sql
 
 
-def transform(query, schema, origin=None):
+def transform(query, schema, origin=None, special_sql=False):
     preprocess_schema(schema)
     if origin is None:
         lf = query['model_result_replace']
@@ -229,12 +229,13 @@ def transform(query, schema, origin=None):
     else:
         _transform(components, transformed_sql, col_set, table_names, schema)
 
-    parse_result = to_str(transformed_sql, 1, schema)
+    parse_result = to_str(transformed_sql, 1, schema, special_sql=special_sql)
 
     parse_result = parse_result.replace('\t', '')
     return [parse_result]
 
-def col_to_str(agg, col, tab, table_names, N=1):
+
+def col_to_str(agg, col, tab, table_names, N=1, special_sql=False):
     _col = col.replace(' ', '_')
     if agg == 'none':
         if tab not in table_names:
@@ -242,6 +243,8 @@ def col_to_str(agg, col, tab, table_names, N=1):
         table_alias = table_names[tab]
         if col == '*':
             return '*'
+        if special_sql:
+            return '%s.[%s]' % (table_alias, _col)
         return '%s.%s' % (table_alias, _col)
     else:
         if col == '*':
@@ -252,10 +255,12 @@ def col_to_str(agg, col, tab, table_names, N=1):
             if tab not in table_names:
                 table_names[tab] = 'T' + str(len(table_names) + N)
             table_alias = table_names[tab]
+            if special_sql:
+                return '%s(%s.[%s])' % (agg, table_alias, _col)
             return '%s(%s.%s)' % (agg, table_alias, _col)
 
 
-def infer_from_clause(table_names, schema, columns):
+def infer_from_clause(table_names, schema, columns, special_sql=False):
     tables = list(table_names.keys())
     # print(table_names)
     start_table = None
@@ -314,8 +319,13 @@ def infer_from_clause(table_names, schema, columns):
                         new_join_clause.append(t)
                 join_clause = new_join_clause
 
-    join_clause = ' JOIN '.join(['%s AS %s' % (jc[0], jc[1]) for jc in join_clause])
+    if special_sql:
+        join_clause = ' JOIN '.join(['{%s} AS %s' % (jc[0], jc[1]) for jc in join_clause])
+    else:
+        join_clause = ' JOIN '.join(['%s AS %s' % (jc[0], jc[1]) for jc in join_clause])
+
     return 'FROM ' + join_clause
+
 
 def replace_col_with_original_col(query, col, current_table):
     # print(query, col)
@@ -363,16 +373,14 @@ def preprocess_schema(schema):
     schema['graph'] = graph
 
 
-
-
-def to_str(sql_json, N_T, schema, pre_table_names=None):
+def to_str(sql_json, N_T, schema, pre_table_names=None, special_sql=False):
     all_columns = list()
     select_clause = list()
     table_names = dict()
     current_table = schema
     for (agg, col, tab) in sql_json['select']:
         all_columns.append((agg, col, tab))
-        select_clause.append(col_to_str(agg, col, tab, table_names, N_T))
+        select_clause.append(col_to_str(agg, col, tab, table_names, N_T, special_sql=special_sql))
     select_clause_str = 'SELECT ' + ', '.join(select_clause).strip()
 
     sup_clause = ''
@@ -382,12 +390,12 @@ def to_str(sql_json, N_T, schema, pre_table_names=None):
     if 'sup' in sql_json:
         (direction, agg, col, tab,) = sql_json['sup']
         all_columns.append((agg, col, tab))
-        subject = col_to_str(agg, col, tab, table_names, N_T)
+        subject = col_to_str(agg, col, tab, table_names, N_T, special_sql=special_sql)
         sup_clause = ('ORDER BY %s %s LIMIT 1' % (subject, direction_map[direction])).strip()
     elif 'order' in sql_json:
         (direction, agg, col, tab,) = sql_json['order']
         all_columns.append((agg, col, tab))
-        subject = col_to_str(agg, col, tab, table_names, N_T)
+        subject = col_to_str(agg, col, tab, table_names, N_T, special_sql=special_sql)
         order_clause = ('ORDER BY %s %s' % (subject, direction_map[direction])).strip()
 
     has_group_by = False
@@ -405,7 +413,7 @@ def to_str(sql_json, N_T, schema, pre_table_names=None):
                 if value:
                     value['sql'] = sql_json['sql']
                 all_columns.append((agg, col, tab))
-                subject = col_to_str(agg, col, tab, table_names, N_T)
+                subject = col_to_str(agg, col, tab, table_names, N_T, special_sql=special_sql)
                 if value is None:
                     where_value = '1'
                     if op == 'between':
@@ -496,14 +504,15 @@ def to_str(sql_json, N_T, schema, pre_table_names=None):
             for (agg, col, tab) in sql_json['select']:
 
                 if agg == 'none':
-                    group_by_clause = 'GROUP BY ' + col_to_str(agg, col, tab, table_names, N_T)
+                    group_by_clause = 'GROUP BY ' + col_to_str(agg, col, tab, table_names, N_T, special_sql=special_sql)
                 else:
                     is_agg_flag = True
 
             if is_agg_flag is False and len(group_by_clause) > 5:
                 group_by_clause = "GROUP BY"
                 for (agg, col, tab) in sql_json['select']:
-                    group_by_clause = group_by_clause + ' ' + col_to_str(agg, col, tab, table_names, N_T)
+                    group_by_clause = group_by_clause + ' ' + col_to_str(agg, col, tab, table_names, N_T,
+                                                                         special_sql=special_sql)
 
             if len(group_by_clause) < 5:
                 if 'count(*)' in select_clause_str:
@@ -513,7 +522,8 @@ def to_str(sql_json, N_T, schema, pre_table_names=None):
                             group_by_clause = 'GROUP BY ' + col_to_str('none', current_table['schema_content'][primary],
                                                                        current_table['table_names'][
                                                                            current_table['col_table'][primary]],
-                                                                       table_names, N_T)
+                                                                       table_names, N_T,
+                                                                       special_sql=special_sql)
         else:
             # if only one select
             if len(sql_json['select']) == 1:
@@ -541,13 +551,14 @@ def to_str(sql_json, N_T, schema, pre_table_names=None):
                             group_by_clause = 'GROUP BY ' + col_to_str('none',
                                                                        current_table['schema_content'][pair[0]],
                                                                        t1,
-                                                                       table_names, N_T)
+                                                                       table_names, N_T,
+                                                                       special_sql=special_sql)
                             fix_flag = True
                             break
 
                 if fix_flag is False:
                     agg, col, tab = sql_json['select'][0]
-                    group_by_clause = 'GROUP BY ' + col_to_str(agg, col, tab, table_names, N_T)
+                    group_by_clause = 'GROUP BY ' + col_to_str(agg, col, tab, table_names, N_T, special_sql=special_sql)
 
             else:
                 # check if there are only one non agg
@@ -562,7 +573,8 @@ def to_str(sql_json, N_T, schema, pre_table_names=None):
                 non_lists = list(set(non_lists))
                 # print(non_lists)
                 if non_agg_count == 1:
-                    group_by_clause = 'GROUP BY ' + col_to_str(non_agg[0], non_agg[1], non_agg[2], table_names, N_T)
+                    group_by_clause = 'GROUP BY ' + col_to_str(non_agg[0], non_agg[1], non_agg[2], table_names, N_T,
+                                                               special_sql=special_sql)
                 elif non_agg:
                     find_flag = False
                     fix_flag = False
@@ -588,7 +600,8 @@ def to_str(sql_json, N_T, schema, pre_table_names=None):
                                     group_by_clause = 'GROUP BY ' + col_to_str('none',
                                                                                current_table['schema_content'][pair[0]],
                                                                                t1,
-                                                                               table_names, N_T)
+                                                                               table_names, N_T,
+                                                                               special_sql=special_sql)
                                     fix_flag = True
                                     break
                     tab = non_agg[2]
@@ -612,13 +625,15 @@ def to_str(sql_json, N_T, schema, pre_table_names=None):
                                 if current_table['table_names'][current_table['col_table'][pair]] in table_names:
                                     group_by_clause = 'GROUP BY ' + col_to_str('none', current_table['schema_content'][pair],
                                                                                    current_table['table_names'][current_table['col_table'][pair]],
-                                                                                   table_names, N_T)
+                                                                                   table_names, N_T,
+                                                                               special_sql=special_sql)
                                     find_flag = True
                                     break
                             if find_flag is False:
                                 for (agg, col, tab) in sql_json['select']:
                                     if 'id' in col.lower():
-                                        group_by_clause = 'GROUP BY ' + col_to_str(agg, col, tab, table_names, N_T)
+                                        group_by_clause = 'GROUP BY ' + col_to_str(agg, col, tab, table_names, N_T,
+                                                                                   special_sql=special_sql)
                                         break
                                 if len(group_by_clause) > 5:
                                     pass
@@ -627,7 +642,8 @@ def to_str(sql_json, N_T, schema, pre_table_names=None):
                         else:
                             group_by_clause = 'GROUP BY ' + col_to_str('none', find_primary[0],
                                                                        find_primary[1],
-                                                                       table_names, N_T)
+                                                                       table_names, N_T,
+                                                                       special_sql=special_sql)
     intersect_clause = ''
     if 'intersect' in sql_json:
         sql_json['intersect']['sql'] = sql_json['sql']
@@ -650,7 +666,7 @@ def to_str(sql_json, N_T, schema, pre_table_names=None):
         if key is None:
             continue
         new_table_names[table_names_replace[key]] = value
-    from_clause = infer_from_clause(new_table_names, schema, all_columns).strip()
+    from_clause = infer_from_clause(new_table_names, schema, all_columns, special_sql=special_sql).strip()
 
     sql = ' '.join([select_clause_str, from_clause, where_clause, group_by_clause, have_clause, sup_clause, order_clause,
                     intersect_clause, union_clause, except_clause])

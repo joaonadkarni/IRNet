@@ -258,11 +258,12 @@ def generate_query_and_out_attrs_from_prediction_lf(logger=None):
     data = datas[0]
 
     try:
-        result = transform(data, schemas[data['db_id']])
+        result = transform(data, schemas[data['db_id']], special_sql=True)
         _log_or_print(logger, f"Query: {result[0]}")
     except Exception as e:
         result = transform(data, schemas[data['db_id']],
-                           origin='Root1(3) Root(5) Sel(0) N(0) A(3) C(0) T(0)')
+                           origin='Root1(3) Root(5) Sel(0) N(0) A(3) C(0) T(0)',
+                           special_sql=True)
         _log_or_print(logger, f"Query: {result[0]}")
         if logger:
             logger.error("Something went wrong transforming the predicted lf to the sql query", exc_info=1)
