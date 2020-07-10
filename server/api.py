@@ -19,8 +19,8 @@ class Nlp2SqlApiV1(BasePOSTAPIPipeline):
 
     def parse_request(self, request: Request) -> ServerModelInput:
         data = request.get_json()
-        build_spider_tables(data['data_model'])
-        question_data, table_data = build_input(data['text'])
+        db_id = build_spider_tables(data['data_model'])
+        question_data, table_data = build_input(data['text'], db_id=db_id)
         return ServerModelInput(question=question_data, tables=table_data)
 
     def handle_request(self, *args, **kwargs) -> Response:

@@ -139,6 +139,7 @@ def build_spider_tables(data_model):
     spider_table = _data_model_to_spider_data(data_model)
     with open(TABLE_DATA_PATH, 'w') as f:
         json.dump([spider_table], f)
+    return spider_table['db_id']
 
 
 def get_args():
@@ -175,10 +176,12 @@ def get_and_load_model(args, logger=None):
     return model
 
 
-def build_input(question_str):
+def build_input(question_str, db_id=None):
 
     DUMMY_INPUT["question"] = question_str
     DUMMY_INPUT["question_toks"] = [tok for tok in question_str.strip().split(" ") if tok]
+    if db_id:
+        DUMMY_INPUT["db_id"] = db_id
 
     if DUMMY_INPUT["question_toks"][-1].endswith("?"):
         DUMMY_INPUT["question_toks"][-1] = DUMMY_INPUT["question_toks"][-1][:-1]
