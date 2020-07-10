@@ -235,7 +235,7 @@ def generate_query_and_out_attrs_from_prediction_lf(logger=None):
                 if not col:
                     continue
                 agg_id = col[0]
-                if agg_id:
+                if agg_id != 0:
                     out_attrs.append(None)
                     break
                 cold_id = col[1]
