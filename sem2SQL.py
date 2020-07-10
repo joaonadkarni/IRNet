@@ -17,6 +17,9 @@ from src.rule.semQL import Sup, Sel, Order, Root, Filter, A, N, C, T, Root1
 from src.rule.sem_utils import alter_inter, alter_not_in, alter_column0, load_dataSets
 
 
+VALUE_NAME_PREFIX = "@inputParam"
+
+
 def split_logical_form(lf):
     indexs = [i+1 for i, letter in enumerate(lf) if letter == ')']
     indexs.insert(0, 0)
@@ -401,6 +404,9 @@ def to_str(sql_json, N_T, schema, pre_table_names=None, special_sql=False):
     has_group_by = False
     where_clause = ''
     have_clause = ''
+
+    value_counter = 0
+
     if 'where' in sql_json:
         conjunctions = list()
         filters = list()
@@ -415,9 +421,13 @@ def to_str(sql_json, N_T, schema, pre_table_names=None, special_sql=False):
                 all_columns.append((agg, col, tab))
                 subject = col_to_str(agg, col, tab, table_names, N_T, special_sql=special_sql)
                 if value is None:
-                    where_value = '1'
+                    where_value = VALUE_NAME_PREFIX
+                    if value_counter > 0:
+                        where_value = f'{where_value}{value_counter}'
+                        value_counter += 1
                     if op == 'between':
-                        where_value = '1 AND 2'
+                        where_value = f'{where_value} AND {VALUE_NAME_PREFIX}{value_counter}'
+                        value_counter += 1
                     filters.append('%s %s %s' % (subject, op, where_value))
                 else:
                     if op == 'in' and len(value['select']) == 1 and value['select'][0][0] == 'none' \
