@@ -35,7 +35,7 @@ class Nlp2SqlApiV1(BasePOSTAPIPipeline):
             "query_sql": processed_data.sql,
         }
 
-    def process_request(self, parsed_data: ModelInput) -> ServerResponse:
+    def process_request(self, parsed_data: ServerModelInput) -> ServerResponse:
         """
         Defines the logic to process the data parsed from the request
         """
