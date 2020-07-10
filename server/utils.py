@@ -256,12 +256,12 @@ def generate_query_and_out_attrs_from_prediction_lf(logger=None):
         for k, v in input_params_dict.items():
             tab, col = v
             i = -1
-            for i, other_col_name in table_data['column_names']:
-                if other_col_name == col:
+            for i, other_col in enumerate(table_data['column_names']):
+                if other_col[1] == col:
                     break
             else:
-                for i, other_col_name in table_data['column_names_original']:
-                    if other_col_name == col:
+                for i, other_col in table_data['column_names_original']:
+                    if other_col[1] == col:
                         break
             if i == -1:
                 continue
