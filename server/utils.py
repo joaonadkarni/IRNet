@@ -245,17 +245,17 @@ def generate_query_and_out_attrs_from_prediction_lf(logger=None):
     datas, schemas, table_datas = _load_dataSets(input_path=PREDICT_LF_PATH, tables_path=TABLE_DATA_PATH)
     assert len(datas) == 1, "More than 1 output query"
 
-    try:
-        out_attrs = _get_out_attributes(predicted_lf=datas[0], table_data=table_datas[0])
-    except Exception:
-        logger.error("Failed to get out attributes", exc_info=1)
-        out_attrs = []
-
     alter_not_in(datas, schemas=schemas)
     alter_inter(datas)
     alter_column0(datas)
 
     data = datas[0]
+
+    try:
+        out_attrs = _get_out_attributes(predicted_lf=data, table_data=table_datas[0])
+    except Exception:
+        logger.error("Failed to get out attributes", exc_info=1)
+        out_attrs = []
 
     try:
         result = transform(data, schemas[data['db_id']], special_sql=True)
