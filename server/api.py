@@ -5,8 +5,8 @@ from flask import Request, Response
 from server.base_api import BasePOSTAPIPipeline
 
 from server.namedtuples import ServerModelInput, ServerResponse
-from server.utils import get_and_load_model, get_args, build_model_prediction_lf, generate_query_from_prediction_lf, \
-    build_spider_tables, build_input
+from server.utils import get_and_load_model, get_args, build_model_prediction_lf, \
+    generate_query_and_out_attrs_from_prediction_lf, build_spider_tables, build_input
 
 logger = logging.getLogger(__name__)
 
@@ -31,7 +31,7 @@ class Nlp2SqlApiV1(BasePOSTAPIPipeline):
 
     def build_reply(self, processed_data: ServerResponse):
         return {
-            "query_outputs": processed_data.out_ents,
+            "query_outputs": processed_data.out_attrs,
             "query_sql": processed_data.sql,
         }
 
@@ -40,8 +40,8 @@ class Nlp2SqlApiV1(BasePOSTAPIPipeline):
         Defines the logic to process the data parsed from the request
         """
         build_model_prediction_lf(self.model, parsed_data.tables, parsed_data.question, self.args.beam_size)
-        sql = generate_query_from_prediction_lf(logger)
-        return ServerResponse(sql=sql, out_ents=["aa", "bb"])
+        sql, out_attrs = generate_query_and_out_attrs_from_prediction_lf(logger)
+        return ServerResponse(sql=sql, out_attrs=out_attrs)
 
     @property
     def version(self) -> str:

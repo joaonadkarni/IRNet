@@ -8,4 +8,4 @@ class ServerModelInput(NamedTuple):
 
 class ServerResponse(NamedTuple):
     sql: str
-    out_ents: List[str]
+    out_attrs: List[str]

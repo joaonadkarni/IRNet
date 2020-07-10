@@ -114,6 +114,7 @@ def _data_model_to_spider_data(data_model):
     result = {
         'column_names': [all_column, *df.apply(lambda x: [x['entIdx'], _normalize_word(x['name'])], axis=1).tolist()],
         'column_names_original': [all_column, *df.apply(lambda x: [x['entIdx'], x['name']], axis=1).tolist()],
+        'column_keys': [[-1, None], *df.apply(lambda x: [x['entIdx'], x['key']], axis=1).tolist()],
         'column_types': df['type'].map(
             lambda x: 'number' if x.endswith('Identifier') else map_types.get(x, 'text')).tolist(),
         'db_id': '_'.join(df['entName'].unique().tolist()),
@@ -207,7 +208,7 @@ def build_model_prediction_lf(model, table_data_new, question_data, beam_size):
         json.dump(json_datas, f)
 
 
-def generate_query_from_prediction_lf(logger=None):
+def generate_query_and_out_attrs_from_prediction_lf(logger=None):
     def _load_dataSets(input_path, tables_path):
         with open(input_path, 'r') as f:
             datas = json.load(f)
@@ -216,10 +217,40 @@ def generate_query_from_prediction_lf(logger=None):
         schemas = dict()
         for i in range(len(table_datas)):
             schemas[table_datas[i]['db_id']] = table_datas[i]
-        return datas, schemas
+        return datas, schemas, table_datas
 
-    datas, schemas = _load_dataSets(input_path=PREDICT_LF_PATH, tables_path=TABLE_DATA_PATH)
+    def _get_out_attributes(predicted_lf, table_data):
+        out_attrs = []
+        for agg_and_value in predicted_lf['sql']['select'][1]:
+            agg_id = agg_and_value[0]
+            if agg_id != 0:
+                out_attrs.append(None)
+                continue
+            value = agg_and_value[1]
+            unit_op = value[0]
+            if unit_op != 0:
+                out_attrs.append(None)
+                continue
+            for col in (value[1], value[2]):
+                if not col:
+                    continue
+                agg_id = col[0]
+                if agg_id:
+                    out_attrs.append(None)
+                    break
+                cold_id = col[1]
+                out_attrs.append(table_data['column_keys'][cold_id][1])
+        return out_attrs
+
+    datas, schemas, table_datas = _load_dataSets(input_path=PREDICT_LF_PATH, tables_path=TABLE_DATA_PATH)
     assert len(datas) == 1, "More than 1 output query"
+
+    try:
+        out_attrs = _get_out_attributes(predicted_lf=datas, table_data=table_datas)
+    except Exception:
+        logger.error("Failed to get out attributes", exc_info=1)
+        out_attrs = []
+
     alter_not_in(datas, schemas=schemas)
     alter_inter(datas)
     alter_column0(datas)
@@ -241,4 +272,4 @@ def generate_query_from_prediction_lf(logger=None):
             print(traceback.format_exc())
             print('===\n\n')
 
-    return result[0]
+    return result[0], out_attrs
