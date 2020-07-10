@@ -119,7 +119,8 @@ def _data_model_to_spider_data(data_model):
         'db_id': '_'.join(df['entName'].unique().tolist()),
         'primary_keys': df.loc[df['isPrimary'] == True]['index'].tolist(),
         'table_names': [_normalize_word(x) for x in df['entName'].unique().tolist()],
-        'table_names_original': df['entName'].unique().tolist()
+        'table_names_original': df['entName'].unique().tolist(),
+        'table_keys': df['entKey'].unique().tolist()
     }
 
     fks = []
