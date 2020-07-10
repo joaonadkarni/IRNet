@@ -246,7 +246,7 @@ def generate_query_and_out_attrs_from_prediction_lf(logger=None):
     assert len(datas) == 1, "More than 1 output query"
 
     try:
-        out_attrs = _get_out_attributes(predicted_lf=datas, table_data=table_datas)
+        out_attrs = _get_out_attributes(predicted_lf=datas[0], table_data=table_datas[0])
     except Exception:
         logger.error("Failed to get out attributes", exc_info=1)
         out_attrs = []
