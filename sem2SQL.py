@@ -110,7 +110,7 @@ def _transform(components, transformed_sql, col_set, table_names, schema, out_co
                 assert isinstance(agg, A) and isinstance(column, C)
 
                 agg_str = agg.production.split()[1]
-                if agg_str == 'none':
+                if agg_str != 'none':
                     out_col_ids.append(None)
                 else:
                     out_col_ids.append(column.id_c)
