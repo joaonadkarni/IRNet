@@ -219,29 +219,6 @@ def generate_query_and_out_attrs_from_prediction_lf(logger=None):
             schemas[table_datas[i]['db_id']] = table_datas[i]
         return datas, schemas, table_datas
 
-    def _get_out_attributes(predicted_lf, table_data):
-        out_attrs = []
-        for agg_and_value in predicted_lf['sql']['select'][1]:
-            agg_id = agg_and_value[0]
-            if agg_id != 0:
-                out_attrs.append(None)
-                continue
-            value = agg_and_value[1]
-            unit_op = value[0]
-            if unit_op != 0:
-                out_attrs.append(None)
-                continue
-            for col in (value[1], value[2]):
-                if not col:
-                    continue
-                agg_id = col[0]
-                if agg_id != 0:
-                    out_attrs.append(None)
-                    break
-                cold_id = col[1]
-                out_attrs.append(table_data['column_keys'][cold_id][1])
-        return out_attrs
-
     datas, schemas, table_datas = _load_dataSets(input_path=PREDICT_LF_PATH, tables_path=TABLE_DATA_PATH)
     assert len(datas) == 1, "More than 1 output query"
 
@@ -252,18 +229,12 @@ def generate_query_and_out_attrs_from_prediction_lf(logger=None):
     data = datas[0]
 
     try:
-        out_attrs = _get_out_attributes(predicted_lf=data, table_data=table_datas[0])
-    except Exception:
-        logger.error("Failed to get out attributes", exc_info=1)
-        out_attrs = []
-
-    try:
-        result = transform(data, schemas[data['db_id']], special_sql=True)
+        result, out_col_ids = transform(data, schemas[data['db_id']], special_sql=True)
         _log_or_print(logger, f"Query: {result[0]}")
     except Exception as e:
-        result = transform(data, schemas[data['db_id']],
-                           origin='Root1(3) Root(5) Sel(0) N(0) A(3) C(0) T(0)',
-                           special_sql=True)
+        result, out_col_ids = transform(data, schemas[data['db_id']],
+                                        origin='Root1(3) Root(5) Sel(0) N(0) A(3) C(0) T(0)',
+                                        special_sql=True)
         _log_or_print(logger, f"Query: {result[0]}")
         if logger:
             logger.error("Something went wrong transforming the predicted lf to the sql query", exc_info=1)
@@ -272,5 +243,7 @@ def generate_query_and_out_attrs_from_prediction_lf(logger=None):
             print('Exception')
             print(traceback.format_exc())
             print('===\n\n')
+
+    out_attrs = [table_datas[0]['column_keys'][col_id][1] if col_id else None for col_id in out_col_ids]
 
     return result[0], out_attrs

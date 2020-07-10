@@ -18,7 +18,7 @@ from src.rule.sem_utils import alter_inter, alter_not_in, alter_column0, load_da
 
 
 VALUE_NAME_PREFIX = "@inputParam"
-
+col
 
 def split_logical_form(lf):
     indexs = [i+1 for i, letter in enumerate(lf) if letter == ')']
@@ -73,7 +73,7 @@ def is_end(components, transformed_sql, is_root_processed):
     return end
 
 
-def _transform(components, transformed_sql, col_set, table_names, schema):
+def _transform(components, transformed_sql, col_set, table_names, schema, out_col_ids=[]):
     processed_root = False
     current_table = schema
 
@@ -110,8 +110,14 @@ def _transform(components, transformed_sql, col_set, table_names, schema):
                     components.insert(0, _table)
                 assert isinstance(agg, A) and isinstance(column, C)
 
+                agg_str = agg.production.split()[1]
+                if agg_str == 'none':
+                    out_col_ids.append(None)
+                else:
+                    out_col_ids.append(column.id_c)
+
                 transformed_sql['select'].append((
-                    agg.production.split()[1],
+                    agg_str,
                     replace_col_with_original_col(col_set[column.id_c], table_names[table.id_c], current_table) if table is not None else col_set[column.id_c],
                     table_names[table.id_c] if table is not None else table
                 ))
@@ -208,6 +214,8 @@ def transform(query, schema, origin=None, special_sql=False):
 
     components = split_logical_form(lf)
 
+    out_col_ids = []
+
     transformed_sql = dict()
     transformed_sql['sql'] = query
     c = pop_front(components)
@@ -217,25 +225,25 @@ def transform(query, schema, origin=None, special_sql=False):
         transformed_sql['intersect'] = dict()
         transformed_sql['intersect']['sql'] = query
 
-        _transform(components, transformed_sql, col_set, table_names, schema)
-        _transform(components, transformed_sql['intersect'], col_set, table_names, schema)
+        _transform(components, transformed_sql, col_set, table_names, schema, out_col_ids=out_col_ids)
+        _transform(components, transformed_sql['intersect'], col_set, table_names, schema, out_col_ids=out_col_ids)
     elif c_instance.id_c == 1:
         transformed_sql['union'] = dict()
         transformed_sql['union']['sql'] = query
-        _transform(components, transformed_sql, col_set, table_names, schema)
-        _transform(components, transformed_sql['union'], col_set, table_names, schema)
+        _transform(components, transformed_sql, col_set, table_names, schema, out_col_ids=out_col_ids)
+        _transform(components, transformed_sql['union'], col_set, table_names, schema, out_col_ids=out_col_ids)
     elif c_instance.id_c == 2:
         transformed_sql['except'] = dict()
         transformed_sql['except']['sql'] = query
-        _transform(components, transformed_sql, col_set, table_names, schema)
-        _transform(components, transformed_sql['except'], col_set, table_names, schema)
+        _transform(components, transformed_sql, col_set, table_names, schema, out_col_ids=out_col_ids)
+        _transform(components, transformed_sql['except'], col_set, table_names, schema, out_col_ids=out_col_ids)
     else:
-        _transform(components, transformed_sql, col_set, table_names, schema)
+        _transform(components, transformed_sql, col_set, table_names, schema, out_col_ids=out_col_ids)
 
     parse_result = to_str(transformed_sql, 1, schema, special_sql=special_sql)
 
     parse_result = parse_result.replace('\t', '')
-    return [parse_result]
+    return [parse_result], out_col_ids
 
 
 def col_to_str(agg, col, tab, table_names, N=1, special_sql=False):
@@ -705,12 +713,12 @@ if __name__ == '__main__':
     with open(args.output_path, 'w', encoding='utf8') as d, open('gold.txt', 'w', encoding='utf8') as g:
         for i in index:
             try:
-                result = transform(datas[i], schemas[datas[i]['db_id']])
+                result, _ = transform(datas[i], schemas[datas[i]['db_id']])
                 d.write(result[0] + '\n')
                 g.write("%s\t%s\t%s\n" % (datas[i]['query'], datas[i]["db_id"], datas[i]["question"]))
                 count += 1
             except Exception as e:
-                result = transform(datas[i], schemas[datas[i]['db_id']], origin='Root1(3) Root(5) Sel(0) N(0) A(3) C(0) T(0)')
+                result, _ = transform(datas[i], schemas[datas[i]['db_id']], origin='Root1(3) Root(5) Sel(0) N(0) A(3) C(0) T(0)')
                 exception_count += 1
                 d.write(result[0] + '\n')
                 g.write("%s\t%s\t%s\n" % (datas[i]['query'], datas[i]["db_id"], datas[i]["question"]))
