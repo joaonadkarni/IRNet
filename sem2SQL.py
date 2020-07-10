@@ -431,7 +431,7 @@ def to_str(sql_json, N_T, schema, pre_table_names=None, special_sql=False):
                 all_columns.append((agg, col, tab))
                 subject = col_to_str(agg, col, tab, table_names, N_T, special_sql=special_sql)
                 if value is None:
-                    where_value = f"{VALUE_PREFIX}{tab}{col[0].upper()}{col[1:]}"
+                    where_value = f"{VALUE_PREFIX}{tab[0].upper()}{tab[1:]}{col[0].upper()}{col[1:]}"
                     i = 1
                     while where_value in value_set:
                         where_value = f"{where_value}{i}"
