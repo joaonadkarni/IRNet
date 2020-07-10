@@ -94,7 +94,7 @@ def _get_data_model_df(data_model):
     return pd.DataFrame(augmented_attributes)
 
 
-def _data_model_to_spider_data(data_model):
+def _data_model_to_spider_data(data_model, add_all_type=False):
     df = _get_data_model_df(data_model)
     map_types = dict({'Text': 'text',
                       'Integer': 'number',
@@ -126,6 +126,9 @@ def _data_model_to_spider_data(data_model):
         'table_keys': df['entKey'].unique().tolist()
     }
 
+    if add_all_type:
+        result['column_types'] = ['text', *result['column_types']]
+
     fks = []
     for fkref, idx in df.loc[~df['fkRefKey'].isnull()][['fkRefKey', 'index']].values.tolist():
         origin_key_idx = df.loc[(df['entKey'] == fkref) & (df['isPrimary'] == True)]['index'].tolist()
@@ -137,8 +140,8 @@ def _data_model_to_spider_data(data_model):
     return result
 
 
-def build_spider_tables(data_model):
-    spider_table = _data_model_to_spider_data(data_model)
+def build_spider_tables(data_model, add_all_type=False):
+    spider_table = _data_model_to_spider_data(data_model, add_all_type=add_all_type)
     with open(TABLE_DATA_PATH, 'w') as f:
         json.dump([spider_table], f)
     return spider_table['db_id']
