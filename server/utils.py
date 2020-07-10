@@ -270,4 +270,4 @@ def generate_query_and_out_attrs_from_prediction_lf(logger=None):
 
     input_params = _input_params_from_input_params_dict(input_params_dict, table_datas[0])
 
-    return result[0], out_attrs, input_params_dict
+    return result[0], out_attrs, input_params
