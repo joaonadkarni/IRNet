@@ -18,6 +18,8 @@ from src.rule.sem_utils import alter_inter, alter_not_in, alter_column0, load_da
 
 
 VALUE_NAME_PREFIX = "@inputParam"
+VALUE_PREFIX = "@input"
+
 
 def split_logical_form(lf):
     indexs = [i+1 for i, letter in enumerate(lf) if letter == ')']
@@ -413,6 +415,7 @@ def to_str(sql_json, N_T, schema, pre_table_names=None, special_sql=False):
     have_clause = ''
 
     value_counter = 0
+    value_set = set()
 
     if 'where' in sql_json:
         conjunctions = list()
@@ -428,13 +431,23 @@ def to_str(sql_json, N_T, schema, pre_table_names=None, special_sql=False):
                 all_columns.append((agg, col, tab))
                 subject = col_to_str(agg, col, tab, table_names, N_T, special_sql=special_sql)
                 if value is None:
-                    where_value = VALUE_NAME_PREFIX
-                    if value_counter > 0:
-                        where_value = f'{where_value}{value_counter}'
-                        value_counter += 1
+                    where_value = f"{VALUE_PREFIX}{tab}{col[0].upper()}{col[1:]}"
+                    i = 1
+                    while where_value in value_set:
+                        where_value = f"{where_value}{i}"
+                        i += 1
+                    value_set.add(where_value)
                     if op == 'between':
-                        where_value = f'{where_value} AND {VALUE_NAME_PREFIX}{value_counter}'
-                        value_counter += 1
+                        where_value2 = f"{where_value}{i}" if i == 1 else f"{where_value[:-len(str(i))]}{i}"
+                        value_set.add(where_value2)
+                        where_value = f'{where_value} AND {where_value2}'
+                    # where_value = VALUE_NAME_PREFIX
+                    # if value_counter > 0:
+                    #     where_value = f'{where_value}{value_counter}'
+                    # value_counter += 1
+                    # if op == 'between':
+                    #     where_value = f'{where_value} AND {VALUE_NAME_PREFIX}{value_counter}'
+                    #     value_counter += 1
                     filters.append('%s %s %s' % (subject, op, where_value))
                 else:
                     if op == 'in' and len(value['select']) == 1 and value['select'][0][0] == 'none' \
