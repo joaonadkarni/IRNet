@@ -2,10 +2,10 @@ import logging
 from datetime import datetime
 from flask import Request, Response
 
-from base_api import BasePOSTAPIPipeline
+from server.base_api import BasePOSTAPIPipeline
 
-from namedtuples import ServerModelInput, ServerResponse
-from utils import get_and_load_model, get_args, build_model_prediction_lf, generate_query_from_prediction_lf, \
+from server.namedtuples import ServerModelInput, ServerResponse
+from server.utils import get_and_load_model, get_args, build_model_prediction_lf, generate_query_from_prediction_lf, \
     build_spider_tables, build_input
 
 logger = logging.getLogger(__name__)
@@ -17,11 +17,11 @@ class Nlp2SqlApiV1(BasePOSTAPIPipeline):
         super().__init__(*args, **kwargs)
         self.model, self.args = None, None
 
-    def parse_request(self, request: Request) -> ModelInput:
+    def parse_request(self, request: Request) -> ServerModelInput:
         data = request.get_json()
         build_spider_tables(data['data_model'])
         question_data, table_data = build_input(data['text'])
-        return ModelInput(question=question_data, tables=table_data)
+        return ServerModelInput(question=question_data, tables=table_data)
 
     def handle_request(self, *args, **kwargs) -> Response:
         # Save timestamp when job was received

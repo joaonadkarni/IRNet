@@ -5,8 +5,8 @@ import pandas as pd
 
 import torch
 
-from constants import MODEL_PATH, EMBEDS_PATH, QUESTION_DATA_PATH, TABLE_DATA_PATH, PREDICT_LF_PATH
-from dummy_input import DUMMY_INPUT
+from server.constants import MODEL_PATH, EMBEDS_PATH, QUESTION_DATA_PATH, TABLE_DATA_PATH, PREDICT_LF_PATH
+from server.dummy_input import DUMMY_INPUT
 from sem2SQL import transform
 from src.models.model import IRNet
 from src.rule import semQL
