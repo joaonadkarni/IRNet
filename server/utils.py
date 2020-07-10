@@ -24,13 +24,12 @@ def _log_or_print(logger, msg):
 
 
 def _normalize_word(word):
-
-    if len(word)<2:
+    if len(word) < 2:
         return [word.lower()]
 
     tokens = []
     b = 0 if (word[0].isalpha()) else 1
-    i=1
+    i = 1
 
     for char in word[1:]:
 
@@ -38,7 +37,7 @@ def _normalize_word(word):
         #  in two subtokens, with the uppercase letter being the cutting point
         # For example, createdBy would be divided in created and by
         # Note that the uppercase letter of the second word is replaced by its correspondent lower case letter
-        if char.isupper() and word[i-1].islower() and (i-b)>1:
+        if char.isupper() and word[i - 1].islower() and (i - b) > 1:
             tokens.append(word[b:i].lower())
             b = i
 
@@ -46,10 +45,10 @@ def _normalize_word(word):
         #  in two subtokens, with the last upper letter being the cutting point
         # For example, FRAPScase would be divided in frap and scase
         # Note that the uppercase letters are replaced by its correspondent lower case letters
-        elif char.islower() and word[i-1].isupper() and (i-b)>1:
-            if (i-b>2):
-                tokens.append(word[b:i-1].lower())
-            b = i-1
+        elif char.islower() and word[i - 1].isupper() and (i - b) > 1:
+            if (i - b > 2):
+                tokens.append(word[b:i - 1].lower())
+            b = i - 1
 
         # If the word has an alpha numeric character followed by a non alpha numeric character then it's separated
         #  in two subtokens, with the non alphabetic character being the cutting point
@@ -57,23 +56,23 @@ def _normalize_word(word):
         # Note that the uppercase letter of the second word is replaced by its correspondent lower case letter
         # Note2: the word has to have at least 2 characters to be considered valid
         elif (not char.isalpha()):
-            if (word[i-1].isalpha()) and (i-b)>1:
+            if (word[i - 1].isalpha()) and (i - b) > 1:
                 tokens.append(word[b:i].lower())
-            b = i+1
+            b = i + 1
 
-        i+=1
+        i += 1
 
     # Add last sub token
     # Note that the uppercase letter of the second word is replaced by its correspondent lower case letter
     # Note2: the word has to have at least 2 characters to be considered valid
-    if b<len(word) and (i-b)>1:
+    if b < len(word) and (i - b) > 1:
         tokens.append(word[b:i].lower())
 
     return " ".join(tokens)
 
 
 def _clean_entities(entities):
-    return [ent for ent in entities if not(ent['isHidden'] or ent['isStatic'] or (ent['refKey'] is not None))]
+    return [ent for ent in entities if not (ent['isHidden'] or ent['isStatic'] or (ent['refKey'] is not None))]
 
 
 def _get_data_model_df(data_model):
@@ -94,7 +93,6 @@ def _get_data_model_df(data_model):
 
 
 def _data_model_to_spider_data(data_model):
-
     df = _get_data_model_df(data_model)
     map_types = dict({'Text': 'text',
                       'Integer': 'number',
@@ -177,13 +175,12 @@ def get_and_load_model(args, logger=None):
 
 
 def build_input(question_str, db_id=None):
-
     DUMMY_INPUT["question"] = question_str
     DUMMY_INPUT["question_toks"] = [tok for tok in question_str.strip().split(" ") if tok]
     if db_id:
         DUMMY_INPUT["db_id"] = db_id
 
-    if DUMMY_INPUT["question_toks"][-1].endswith("?"):
+    if len(DUMMY_INPUT["question_toks"][-1]) > 1 and DUMMY_INPUT["question_toks"][-1].endswith("?"):
         DUMMY_INPUT["question_toks"][-1] = DUMMY_INPUT["question_toks"][-1][:-1]
         DUMMY_INPUT["question_toks"].append("?")
 
@@ -210,7 +207,6 @@ def build_model_prediction_lf(model, table_data_new, question_data, beam_size):
 
 
 def generate_query_from_prediction_lf(logger=None):
-
     def _load_dataSets(input_path, tables_path):
         with open(input_path, 'r') as f:
             datas = json.load(f)
@@ -245,5 +241,3 @@ def generate_query_from_prediction_lf(logger=None):
             print('===\n\n')
 
     return result[0]
-
-
