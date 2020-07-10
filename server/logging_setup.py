@@ -1,7 +1,7 @@
 from copy import deepcopy
 from typing import Dict
 
-import server.logging_utils
+import server.logging_utils as logging_utils
 
 
 def get_logging_config() -> Dict:
