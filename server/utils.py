@@ -260,11 +260,11 @@ def generate_query_and_out_attrs_from_prediction_lf(logger=None):
         for k, v in input_params_dict.items():
             tab, col = v
             i = -1
-            for i, other_col in enumerate(table_data['column_names']):
+            for i, other_col in enumerate(table_data['column_names_original']):
                 if other_col[1] == col:
                     break
             else:
-                for i, other_col in table_data['column_names_original']:
+                for i, other_col in enumerate(table_data['column_names']):
                     if other_col[1] == col:
                         break
             if i == -1:
@@ -272,6 +272,9 @@ def generate_query_and_out_attrs_from_prediction_lf(logger=None):
             input_params.append({"name": k, "key": table_data['column_keys'][i][1]})
         return input_params
 
-    input_params = _input_params_from_input_params_dict(input_params_dict, table_datas[0])
+    try:
+        input_params = _input_params_from_input_params_dict(input_params_dict, table_datas[0])
+    except Exception:
+        input_params = []
 
     return result[0], out_attrs, input_params
