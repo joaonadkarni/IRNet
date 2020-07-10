@@ -18,7 +18,6 @@ from src.rule.sem_utils import alter_inter, alter_not_in, alter_column0, load_da
 
 
 VALUE_NAME_PREFIX = "@inputParam"
-col
 
 def split_logical_form(lf):
     indexs = [i+1 for i, letter in enumerate(lf) if letter == ')']
