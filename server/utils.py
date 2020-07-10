@@ -1,6 +1,8 @@
 import json
 import subprocess
 import traceback
+from typing import Dict
+
 import pandas as pd
 
 import torch
@@ -229,12 +231,12 @@ def generate_query_and_out_attrs_from_prediction_lf(logger=None):
     data = datas[0]
 
     try:
-        result, out_col_ids = transform(data, schemas[data['db_id']], special_sql=True)
+        result, out_col_ids, input_params_dict = transform(data, schemas[data['db_id']], special_sql=True)
         _log_or_print(logger, f"Query: {result[0]}")
     except Exception as e:
-        result, out_col_ids = transform(data, schemas[data['db_id']],
-                                        origin='Root1(3) Root(5) Sel(0) N(0) A(3) C(0) T(0)',
-                                        special_sql=True)
+        result, out_col_ids, input_params_dict = transform(data, schemas[data['db_id']],
+                                                           origin='Root1(3) Root(5) Sel(0) N(0) A(3) C(0) T(0)',
+                                                           special_sql=True)
         _log_or_print(logger, f"Query: {result[0]}")
         if logger:
             logger.error("Something went wrong transforming the predicted lf to the sql query", exc_info=1)
@@ -246,4 +248,23 @@ def generate_query_and_out_attrs_from_prediction_lf(logger=None):
 
     out_attrs = [table_datas[0]['column_keys'][col_id][1] if col_id else None for col_id in out_col_ids]
 
-    return result[0], out_attrs
+    def _input_params_from_input_params_dict(input_params_dict: Dict, table_data):
+        input_params = []
+        for k, v in input_params_dict.items():
+            tab, col = v
+            i = -1
+            for i, other_col_name in table_data['column_names']:
+                if other_col_name == col:
+                    break
+            else:
+                for i, other_col_name in table_data['column_names_original']:
+                    if other_col_name == col:
+                        break
+            if i == -1:
+                continue
+            input_params.append({"name": k, "key": table_data['column_keys'][i][1]})
+        return input_params
+
+    input_params = _input_params_from_input_params_dict(input_params_dict, table_datas[0])
+
+    return result[0], out_attrs, input_params_dict

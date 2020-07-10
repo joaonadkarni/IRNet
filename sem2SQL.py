@@ -199,7 +199,7 @@ def _transform(components, transformed_sql, col_set, table_names, schema, out_co
     return transformed_sql
 
 
-def transform(query, schema, origin=None, special_sql=False):
+def transform(query, schema, origin=None, special_sql=False, input_params_dict=dict()):
     preprocess_schema(schema)
     if origin is None:
         lf = query['model_result_replace']
@@ -241,10 +241,10 @@ def transform(query, schema, origin=None, special_sql=False):
     else:
         _transform(components, transformed_sql, col_set, table_names, schema, out_col_ids=out_col_ids)
 
-    parse_result = to_str(transformed_sql, 1, schema, special_sql=special_sql)
+    parse_result = to_str(transformed_sql, 1, schema, special_sql=special_sql, input_params_dict=input_params_dict)
 
     parse_result = parse_result.replace('\t', '')
-    return [parse_result], out_col_ids
+    return [parse_result], out_col_ids, input_params_dict
 
 
 def col_to_str(agg, col, tab, table_names, N=1, special_sql=False):
@@ -385,7 +385,7 @@ def preprocess_schema(schema):
     schema['graph'] = graph
 
 
-def to_str(sql_json, N_T, schema, pre_table_names=None, special_sql=False):
+def to_str(sql_json, N_T, schema, pre_table_names=None, special_sql=False, input_params_dict=dict()):
     all_columns = list()
     select_clause = list()
     table_names = dict()
@@ -415,7 +415,6 @@ def to_str(sql_json, N_T, schema, pre_table_names=None, special_sql=False):
     have_clause = ''
 
     value_counter = 0
-    value_set = set()
 
     if 'where' in sql_json:
         conjunctions = list()
@@ -433,13 +432,13 @@ def to_str(sql_json, N_T, schema, pre_table_names=None, special_sql=False):
                 if value is None:
                     where_value = f"{VALUE_PREFIX}{tab[0].upper()}{tab[1:]}{col[0].upper()}{col[1:]}"
                     i = 1
-                    while where_value in value_set:
+                    while where_value in input_params_dict:
                         where_value = f"{where_value}{i}"
                         i += 1
-                    value_set.add(where_value)
+                    input_params_dict[where_value] = (tab, col)
                     if op == 'between':
                         where_value2 = f"{where_value}{i}" if i == 1 else f"{where_value[:-len(str(i))]}{i}"
-                        value_set.add(where_value2)
+                        input_params_dict[where_value2] = (tab, col)
                         where_value = f'{where_value} AND {where_value2}'
                     # where_value = VALUE_NAME_PREFIX
                     # if value_counter > 0:
@@ -458,7 +457,8 @@ def to_str(sql_json, N_T, schema, pre_table_names=None, special_sql=False):
                         filters.append(None)
 
                     else:
-                        filters.append('%s %s %s' % (subject, op, '(' + to_str(value, len(table_names) + 1, schema) + ')'))
+                        filters.append('%s %s %s' % (subject, op, '(' + to_str(value, len(table_names) + 1, schema,
+                                                                               input_params_dict=input_params_dict) + ')'))
                 if len(conjunctions):
                     filters.append(conjunctions.pop())
 
@@ -677,15 +677,18 @@ def to_str(sql_json, N_T, schema, pre_table_names=None, special_sql=False):
     intersect_clause = ''
     if 'intersect' in sql_json:
         sql_json['intersect']['sql'] = sql_json['sql']
-        intersect_clause = 'INTERSECT ' + to_str(sql_json['intersect'], len(table_names) + 1, schema, table_names)
+        intersect_clause = 'INTERSECT ' + to_str(sql_json['intersect'], len(table_names) + 1, schema, table_names,
+                                                 input_params_dict=input_params_dict)
     union_clause = ''
     if 'union' in sql_json:
         sql_json['union']['sql'] = sql_json['sql']
-        union_clause = 'UNION ' + to_str(sql_json['union'], len(table_names) + 1, schema, table_names)
+        union_clause = 'UNION ' + to_str(sql_json['union'], len(table_names) + 1, schema, table_names,
+                                         input_params_dict=input_params_dict)
     except_clause = ''
     if 'except' in sql_json:
         sql_json['except']['sql'] = sql_json['sql']
-        except_clause = 'EXCEPT ' + to_str(sql_json['except'], len(table_names) + 1, schema, table_names)
+        except_clause = 'EXCEPT ' + to_str(sql_json['except'], len(table_names) + 1, schema, table_names,
+                                           input_params_dict=input_params_dict)
 
     # print(current_table['table_names_original'])
     table_names_replace = {}
@@ -725,12 +728,12 @@ if __name__ == '__main__':
     with open(args.output_path, 'w', encoding='utf8') as d, open('gold.txt', 'w', encoding='utf8') as g:
         for i in index:
             try:
-                result, _ = transform(datas[i], schemas[datas[i]['db_id']])
+                result, _, _ = transform(datas[i], schemas[datas[i]['db_id']])
                 d.write(result[0] + '\n')
                 g.write("%s\t%s\t%s\n" % (datas[i]['query'], datas[i]["db_id"], datas[i]["question"]))
                 count += 1
             except Exception as e:
-                result, _ = transform(datas[i], schemas[datas[i]['db_id']], origin='Root1(3) Root(5) Sel(0) N(0) A(3) C(0) T(0)')
+                result, _, _ = transform(datas[i], schemas[datas[i]['db_id']], origin='Root1(3) Root(5) Sel(0) N(0) A(3) C(0) T(0)')
                 exception_count += 1
                 d.write(result[0] + '\n')
                 g.write("%s\t%s\t%s\n" % (datas[i]['query'], datas[i]["db_id"], datas[i]["question"]))

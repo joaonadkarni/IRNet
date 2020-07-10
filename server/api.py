@@ -33,6 +33,7 @@ class Nlp2SqlApiV1(BasePOSTAPIPipeline):
         return {
             "query_outputs": processed_data.out_attrs,
             "query_sql": processed_data.sql,
+            "query_inputs": processed_data.input_params
         }
 
     def process_request(self, parsed_data: ServerModelInput) -> ServerResponse:
@@ -40,8 +41,8 @@ class Nlp2SqlApiV1(BasePOSTAPIPipeline):
         Defines the logic to process the data parsed from the request
         """
         build_model_prediction_lf(self.model, parsed_data.tables, parsed_data.question, self.args.beam_size)
-        sql, out_attrs = generate_query_and_out_attrs_from_prediction_lf(logger)
-        return ServerResponse(sql=sql, out_attrs=out_attrs)
+        sql, out_attrs, input_params = generate_query_and_out_attrs_from_prediction_lf(logger)
+        return ServerResponse(sql=sql, out_attrs=out_attrs, input_params=input_params)
 
     @property
     def version(self) -> str:

@@ -9,3 +9,4 @@ class ServerModelInput(NamedTuple):
 class ServerResponse(NamedTuple):
     sql: str
     out_attrs: List[str]
+    input_params: List[Dict[str, str]]
