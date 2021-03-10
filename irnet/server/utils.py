@@ -142,13 +142,14 @@ def build_spider_tables(data_model):
     return spider_table['db_id']
 
 
-def get_args():
+def get_args(dataset_path='./data/custom', glove_embed_path='./data/glove.42B.300d.txt',
+             model_path='./saved_model/IRNet_pretrained.model', use_cuda=True):
     arg_parser = arg.init_arg_parser()
     return arg_parser.parse_args(
-        "--dataset ./data/custom --glove_embed_path ./data/glove.42B.300d.txt --cuda --epoch 50 "
+        f"--dataset {dataset_path} --glove_embed_path {glove_embed_path} {'--cuda' if use_cuda else ''} --epoch 50 "
         "--loss_epoch_threshold 50 --sketch_loss_coefficie 1.0 --beam_size 5 --seed 90 --save ${save_name} "
         "--embed_size 300 --sentence_features --column_pointer --hidden_size 300 --lr_scheduler --lr_scheduler_gammar "
-        "0.5 --att_vec_size 300 --load_model ./saved_model/IRNet_pretrained.model".split())
+        f"0.5 --att_vec_size 300 --load_model {model_path}".split())
 
 
 def get_and_load_model(args, logger=None):
