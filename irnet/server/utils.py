@@ -5,15 +5,15 @@ import pandas as pd
 
 import torch
 
-from server.constants import MODEL_PATH, EMBEDS_PATH, QUESTION_DATA_PATH, TABLE_DATA_PATH, PREDICT_LF_PATH
-from server.dummy_input import DUMMY_INPUT
-from sem2SQL import transform
-from src.models.model import IRNet
-from src.rule import semQL
-from src.utils import load_data_new, get_json_data, load_word_emb
-from src import args as arg
+from irnet.server.constants import MODEL_PATH, EMBEDS_PATH, QUESTION_DATA_PATH, TABLE_DATA_PATH, PREDICT_LF_PATH
+from irnet.server.dummy_input import DUMMY_INPUT
+from irnet.sem2SQL import transform
+from irnet.src.models.model import IRNet
+from irnet.src.rule import semQL
+from irnet.src.utils import load_data_new, get_json_data, load_word_emb
+from irnet.src import args as arg
 
-from src.rule.sem_utils import alter_column0, alter_inter, alter_not_in
+from irnet.src.rule.sem_utils import alter_column0, alter_inter, alter_not_in
 
 
 def _log_or_print(logger, msg):

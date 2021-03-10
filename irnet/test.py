@@ -1,4 +1,4 @@
-from server.utils import get_and_load_model, build_input, build_model_prediction_lf, \
+from irnet.server.utils import get_and_load_model, build_input, build_model_prediction_lf, \
     generate_query_and_out_attrs_from_prediction_lf, get_args
 
 if __name__ == '__main__':

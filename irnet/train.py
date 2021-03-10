@@ -20,10 +20,10 @@ import torch.optim as optim
 import tqdm
 import copy
 
-from src import args as arg
-from src import utils
-from src.models.model import IRNet
-from src.rule import semQL
+from irnet.src import args as arg
+from irnet.src import utils
+from irnet.src.models.model import IRNet
+from irnet.src.rule import semQL
 
 
 def train(args):

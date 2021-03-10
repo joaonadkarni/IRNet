@@ -2,10 +2,10 @@ import logging
 import argparse
 import sys
 
-import server.logging_setup as logging_setup
-from server.api import Nlp2SqlApiV1
-from server.base_app import BaseFlaskApp
-from server.logging_utils import stats_error_handler
+import irnet.server.logging_setup as logging_setup
+from irnet.server.api import Nlp2SqlApiV1
+from irnet.server.base_app import BaseFlaskApp
+from irnet.server.logging_utils import stats_error_handler
 
 
 class ArgParser(argparse.ArgumentParser):

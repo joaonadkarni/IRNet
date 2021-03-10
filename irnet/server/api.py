@@ -2,10 +2,10 @@ import logging
 from datetime import datetime
 from flask import Request, Response
 
-from server.base_api import BasePOSTAPIPipeline
+from irnet.server.base_api import BasePOSTAPIPipeline
 
-from server.namedtuples import ServerModelInput, ServerResponse
-from server.utils import get_and_load_model, get_args, build_model_prediction_lf, \
+from irnet.server.namedtuples import ServerModelInput, ServerResponse
+from irnet.server.utils import get_and_load_model, get_args, build_model_prediction_lf, \
     generate_query_and_out_attrs_from_prediction_lf, build_spider_tables, build_input
 
 logger = logging.getLogger(__name__)

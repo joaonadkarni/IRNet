@@ -12,9 +12,9 @@
 import argparse
 import traceback
 
-from src.rule.graph import Graph
-from src.rule.semQL import Sup, Sel, Order, Root, Filter, A, N, C, T, Root1
-from src.rule.sem_utils import alter_inter, alter_not_in, alter_column0, load_dataSets
+from irnet.src.rule.graph import Graph
+from irnet.src.rule.semQL import Sup, Sel, Order, Root, Filter, A, N, C, T, Root1
+from irnet.src.rule.sem_utils import alter_inter, alter_not_in, alter_column0, load_dataSets
 
 
 VALUE_NAME_PREFIX = "@inputParam"
