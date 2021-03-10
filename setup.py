@@ -7,7 +7,7 @@ package_data = {}
 setup(
     name='IRNet',
     version='0.0.1',
-    py_modules=['IRNet'],
+    py_modules=['irnet'],
     # See: http://pypi.python.org/pypi?%3Aaction=list_classifiers
     classifiers=[
         'Development Status :: 3 - Alpha',
