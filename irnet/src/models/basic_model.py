@@ -18,7 +18,7 @@ import torch.nn.utils
 from torch.autograd import Variable
 from torch.nn.utils.rnn import pad_packed_sequence, pack_padded_sequence
 
-from src.rule import semQL as define_rule
+from irnet.src.rule import semQL as define_rule
 
 
 class BasicModel(nn.Module):

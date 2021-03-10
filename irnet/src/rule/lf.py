@@ -13,8 +13,8 @@ import json
 
 import numpy as np
 
-from src.rule import semQL as define_rule
-from src.rule.semQL import Sup, Sel, Order, Root, Filter, A, N, C, T, Root1
+from irnet.src.rule import semQL as define_rule
+from irnet.src.rule.semQL import Sup, Sel, Order, Root, Filter, A, N, C, T, Root1
 
 
 def _build_single_filter(lf, f):

@@ -11,7 +11,7 @@
 
 import copy
 
-from src.rule import semQL
+from irnet.src.rule import semQL
 
 
 class ActionInfo(object):

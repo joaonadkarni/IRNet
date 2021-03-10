@@ -15,12 +15,12 @@ import torch.nn.functional as F
 import torch.nn.utils
 from torch.autograd import Variable
 
-from src.beam import Beams, ActionInfo
-from src.dataset import Batch
-from src.models import nn_utils
-from src.models.basic_model import BasicModel
-from src.models.pointer_net import PointerNet
-from src.rule import semQL as define_rule
+from irnet.src.beam import Beams, ActionInfo
+from irnet.src.dataset import Batch
+from irnet.src.models import nn_utils
+from irnet.src.models.basic_model import BasicModel
+from irnet.src.models.pointer_net import PointerNet
+from irnet.src.rule import semQL as define_rule
 
 
 class IRNet(BasicModel):
