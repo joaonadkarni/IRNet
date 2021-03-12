@@ -158,9 +158,9 @@ def get_and_load_model(args, logger=None):
 
     if args.cuda: model.cuda()
 
-    _log_or_print(logger, f"Loading pretrained model from {MODEL_PATH}")
+    _log_or_print(logger, f"Loading pretrained model from {args.load_model}")
 
-    pretrained_model = torch.load(MODEL_PATH,
+    pretrained_model = torch.load(args.load_model,
                                   map_location=lambda storage, loc: storage)
     import copy
     pretrained_modeled = copy.deepcopy(pretrained_model)
@@ -170,7 +170,7 @@ def get_and_load_model(args, logger=None):
 
     model.load_state_dict(pretrained_modeled)
 
-    model.word_emb = load_word_emb(EMBEDS_PATH)
+    model.word_emb = load_word_emb(args.glove_embed_path)
 
     model.eval()
 
