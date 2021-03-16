@@ -166,8 +166,11 @@ def set_header(toks, header_toks, tok_concol, idx, num_toks):
     return None
 
 def re_lemma(string):
-    lema = lemma(string.lower())
-    if len(lema) > 0:
-        return lema
-    else:
-        return string.lower()
+    try:
+        lema = lemma(string.lower())
+        if len(lema) > 0:
+            return lema
+    except RuntimeError: # fix for Python 3.7
+        pass
+
+    return string.lower()
