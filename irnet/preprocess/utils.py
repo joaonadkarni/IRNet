@@ -18,6 +18,13 @@ AGG = ['average', 'sum', 'max', 'min', 'minimum', 'maximum', 'between']
 
 wordnet_lemmatizer = WordNetLemmatizer()
 
+def my_lemma(s):
+    try:
+        lemma(s)
+    except:
+        return s
+
+
 def load_dataSets(args):
     with open(args.table_path, 'r', encoding='utf8') as f:
         table_datas = json.load(f)
@@ -167,7 +174,7 @@ def set_header(toks, header_toks, tok_concol, idx, num_toks):
 
 def re_lemma(string):
     try:
-        lema = lemma(string.lower())
+        lema = my_lemma(string.lower())
         if len(lema) > 0:
             return lema
     except RuntimeError: # fix for Python 3.7

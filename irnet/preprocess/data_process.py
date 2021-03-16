@@ -48,6 +48,7 @@ def process_datas(datas, args):
         for y in entry['table_names']:
             x = [wordnet_lemmatizer.lemmatize(x.lower()) for x in y.split(' ')]
             table_names.append(" ".join(x))
+            print('table name', y)
             x = [re_lemma(x.lower()) for x in y.split(' ')]
             table_names_pattern.append(" ".join(x))
 

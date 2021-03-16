@@ -14,7 +14,7 @@ import json
 import argparse
 import re as regex
 from nltk.stem import WordNetLemmatizer
-from pattern.en import lemma
+from irnet.preprocess.utils import my_lemma as lemma
 wordnet_lemmatizer = WordNetLemmatizer()
 
 
