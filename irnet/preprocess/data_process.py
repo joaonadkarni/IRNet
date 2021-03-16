@@ -13,9 +13,9 @@ import argparse
 import nltk
 import os
 import pickle
-from irnet.utils import symbol_filter, re_lemma, fully_part_header, group_header, partial_header, num2year, group_symbol, group_values, group_digital
-from irnet.utils import AGG, wordnet_lemmatizer
-from irnet.utils import load_dataSets
+from irnet.preprocess.utils import symbol_filter, re_lemma, fully_part_header, group_header, partial_header, num2year, group_symbol, group_values, group_digital
+from irnet.preprocess.utils import AGG, wordnet_lemmatizer
+from irnet.preprocess.utils import load_dataSets
 
 def process_datas(datas, args):
     """
