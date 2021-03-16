@@ -20,7 +20,7 @@ wordnet_lemmatizer = WordNetLemmatizer()
 
 def my_lemma(s):
     try:
-        lemma(s)
+        return lemma(s)
     except:
         return s
 
