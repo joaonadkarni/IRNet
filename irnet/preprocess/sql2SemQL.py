@@ -14,7 +14,7 @@ import json
 import sys
 
 import copy
-from irnet.utils import load_dataSets
+from irnet.preprocess.utils import load_dataSets
 
 sys.path.append("..")
 from irnet.src.rule.semQL import Root1, Root, N, A, C, T, Sel, Sup, Filter, Order
