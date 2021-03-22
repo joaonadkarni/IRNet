@@ -221,30 +221,33 @@ def generate_query_and_out_attrs_from_prediction_lf(logger=None):
         return datas, schemas, table_datas
 
     datas, schemas, table_datas = _load_dataSets(input_path=PREDICT_LF_PATH, tables_path=TABLE_DATA_PATH)
-    assert len(datas) == 1, "More than 1 output query"
+    #assert len(datas) == 1, "More than 1 output query"
 
     alter_not_in(datas, schemas=schemas)
     alter_inter(datas)
     alter_column0(datas)
 
-    data = datas[0]
+    results, outs = [], []
 
-    try:
-        result, out_col_ids = transform(data, schemas[data['db_id']], special_sql=True)
-        _log_or_print(logger, f"Query: {result[0]}")
-    except Exception as e:
-        result, out_col_ids = transform(data, schemas[data['db_id']],
+    for data, table_data in zip(datas, table_datas):
+        try:
+            result, out_col_ids = transform(data, schemas[data['db_id']], special_sql=True)
+            _log_or_print(logger, f"Query: {result[0]}")
+        except Exception as e:
+            result, out_col_ids = transform(data, schemas[data['db_id']],
                                         origin='Root1(3) Root(5) Sel(0) N(0) A(3) C(0) T(0)',
                                         special_sql=True)
-        _log_or_print(logger, f"Query: {result[0]}")
-        if logger:
-            logger.error("Something went wrong transforming the predicted lf to the sql query", exc_info=1)
-        else:
-            print(e)
-            print('Exception')
-            print(traceback.format_exc())
-            print('===\n\n')
+            _log_or_print(logger, f"Query: {result[0]}")
+            if logger:
+                logger.error("Something went wrong transforming the predicted lf to the sql query", exc_info=1)
+            else:
+                print(e)
+                print('Exception')
+                print(traceback.format_exc())
+                print('===\n\n')
 
-    out_attrs = [table_datas[0]['column_keys'][col_id][1] if col_id else None for col_id in out_col_ids]
+        #out_attrs = [table_data['column_keys'][col_id][1] if col_id else None for col_id in out_col_ids]
+        results.append(result[0])
+        #outs.append(out_attrs)
 
-    return result[0], out_attrs
+    return results, outs
